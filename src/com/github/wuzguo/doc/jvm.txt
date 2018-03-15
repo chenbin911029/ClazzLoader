@@ -355,11 +355,43 @@ user ClassLoader 自定义类加载器
 的核心类，扩展覆盖掉；但使用父类委托模型，就保证了java API的类先加载
 用户自定义的类就不能覆盖java API定义的类。
 
+8.虚拟机字节码执行引擎
+栈帧 线程私有
+局部变量表
+操作数栈
+动态连接
+返回地址
 
+9.2.3 字节码生成技术与动态代理的实现
+语义分析与字节码生成
+主存和工作内存
+volatile:
+1.保证此变量对所有线程的可见性，当一条线程修改了这个变量
+的值，其他线程可以立即得知。线程不安全。
+2.禁止指令重排序优化
+redis锁
 
+单例模式
+public class Singleton {
+    //私有化构造函数
+    private static Singleton instance;
+    //提供获取实例对象的静态方法
+    public static Singleton getInstance() {
+        //if null提高效率
+        if (instance == null) {
+            //synchronized 同步，线程安全
+            synchronized(Singleton.class){
+                if (instance == null) {
+                    //判断是否已生成对象
+                    instance = new Singleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
 
-
-
+12.3.5原子性，可见性，有序性
 
 
 
