@@ -205,9 +205,13 @@ Java堆
 方法区
 
 3.6内存分配与回收策略
-eden
+对象主要分配在新生代的eden区上，当eden区没有足够空间进行分配时，虚拟机会发起一次
+Minor GC
+大对象（需要大量连续内存的对象，长字符串，数组）直接在老年代分配，可以避免在eden区
+和两个survivor区发生大量的内存复制。
+
 新生代GC minor GC
-老年代GC Major GC
+老年代GC Major GC/Full GC
 
 -xx:pretenureSizeThreshold参数，大于这个值直接分配
 到老年代，避免新生代发生大量的内存复制
@@ -216,6 +220,162 @@ eden
 对象age,每minor GC 一次存活下来age+1
 回收15次依然存活，则进入老年代
 -xx:maxTenuringThreadshold
+动态对象年龄判定
+年龄为x的对象总和大于survivor空间的一半，那么年龄大于等于该年龄的对象就直接进入
+老年代。
+空间分配担保，检查老年代的可用连续空间是否大于新生代所有对象总空间，若成立，那么
+Minor GC是安全的。不成立，看是否允许担保失败。不允许冒险，则要改为进行一次Full GC
+
+survivor无法容纳的对象直接进入老年代
+
+第四章
+虚拟机性能监控，与故障处理工具。
+运行日志，异常堆栈，GC日志，线程快照，堆转储快照
+
+4.2.1虚拟机进程状况工具
+jps [options] [hostid]
+jps -1
+
+4.2.2jstat 虚拟机统计信息监视工具
+jstat -gc
+
+4.2.3 jinfo java配置信息工具
+4.2.4 jmap java内存映像工具
+4.2.5 jhat 虚拟机堆转储快照分析工具
+4.2.6 jstack java堆栈跟踪工具
+
+实现线程的方法
+1.实现runnable接口
+2.继承Thread类
+thread.start();
+线程死循环
+public static void {
+    Thread thread = new Thread(new Runnable(){
+        public void run(){
+            while(true){
+                ;
+            }
+        }
+    });
+    thread.start();
+}
+
+线程锁等待
+public static void createLockThread(final Object lock) {
+    Thread thread = new Thread(new Runnable(){
+        public void run() {
+            synchronized(lock){
+                try{
+                    lock.wait();
+                } catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    },"testLockThread");
+    thread.start();
+}
+
+线程死锁
+static class SynAddRunnable implements Runnable {
+    int a,b;
+    public SynAddRunnable(int a,int b){
+        this.a = a;
+        this.b = b;
+    }
+    public void run() {
+        synchronized (Integer.valueOf(a)) {
+            synchronized (Integer.valueOf(a)) {
+                System.out.println(a,b);
+            }
+        }
+    }
+
+    public static void main(String[] args){
+        for (int i=0;i<100;i++){
+            new Thread(new SynAddRunnable(1,2)).start();
+            new Thread(new SynAddRunnable(2,1)).start();
+        }
+
+    }
+}
+
+深夜定时任务方式触发Full GC
+栈溢出，递归深度
+
+-Xverify:none
+-Xmx512m
+-Xms512m
+-Xmn12m
+-XX:PermSize=96m
+-XX:MaxPermSize=96m
+
+第三部分
+虚拟机执行子系统
+字节码文件，java虚拟机
+每个Class 文件的头4个字节成为魔数（Magic Number）,它的唯一作用就是
+确定这个文件是否被虚拟机接受的Class文件。
+
+常量池
+字面量，Java的常量
+符号引用，类和接口的全限定名，字段的名称和描述符，方法的名称和描述符
+
+类在JVM的生命周期
+加载 验证 准备 解析 初始化 使用 卸载
+解析是可选的，动态绑定
+
+加载
+
+验证：验证是否class文件，文件头4个字节
+0xCAFEBABE
+1.文件格式验证
+2.元数据验证
+3.字节码验证
+4.符号引用验证
+
+准备：
+为类变量分配内存，设置类变量的初始值，静态变量，方法区中分配
+解析：
+1.虚拟机将常量池内的符号引用替换为直接引用的过程
+2.字段解析
+3.类方法解析
+4.接口方法解析
+
+初始化
+执行Java程序代码
+
+启动类加载器 bootstrap ClassLoader  java 核心API
+扩展类加载器 extension ClassLoader  Java 扩展API /ext/
+应用程序类加载器 application ClassLoader /classpath/程序定义的类
+user ClassLoader 自定义类加载器
+
+这里类加载器之间的父子关系不会以集成的方法，而是以组合的方式。
+1.防止类的重复加载
+2.安全考虑。如果用户可以用自定义的加载器去加载String,那么就会把java
+的核心类，扩展覆盖掉；但使用父类委托模型，就保证了java API的类先加载
+用户自定义的类就不能覆盖java API定义的类。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
